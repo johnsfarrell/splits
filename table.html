@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splits Table</title>
+</head>
+
+<body>
+    <a href="/calculator.html">Splits Calculator</a>
+
+    <hr />
+
+    <table>
+        <tr>
+            <th>MPH</th>
+            <th>mm:ss</th>
+        </tr>
+        <tr></tr>
+    </table>
+
+    <hr />
+</body>
+
+<script>
+    function formatSeconds(time) {
+        let minutes = Math.floor(time / 60);
+        let seconds = time % 60;
+
+        return minutes + ':' + (seconds < 10 ? '0' : '') + seconds.toFixed(1);
+    }
+
+    function addToTable(mph, time) {
+        let table = document.querySelector('table');
+        let row = table.insertRow(-1);
+
+        let mphCell = row.insertCell(0);
+        mphCell.textContent = mph;
+
+        let timeCell = row.insertCell(1);
+        timeCell.textContent = time;
+    }
+
+    function init() {
+        for (let mph = 7; mph < 15; mph += 0.1) {
+            addToTable(mph.toFixed(1), formatSeconds(3600 / mph));
+        }
+    }
+
+    init();
+</script>
+
+<style>
+    td {
+        font-family: monospace;
+        padding: 10px;
+        text-align: end;
+    }
+</style>
+
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splits Calculator</title>
+    <style>
+        li {
+            font-family: monospace;
+        }
+
+        input#distance {
+            width: 3em;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        ul ul {
+            padding-left: 30px;
+        }
+
+        button {
+            margin: 5px 0;
+        }
+
+        .splitsUl {
+            margin-left: 0.875em;
+            border-left: 1px solid #00000050;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="/table.html">Splits Table</a>
+    <hr />
+    <input type="text" id="time" placeholder="M:SS.MS or x.xx" />
+    <button onclick="calculate()">Calculate</button>
+    <button onclick="calculate(true)">With Split</button>
+    <input type="text" id="distance" value="1" />
+    <select id="unit">
+        <option value="mile">Mile</option>
+        <option value="meter">Meter</option>
+        <option value="kilometer">Kilometer</option>
+    </select>
+    <hr />
+    <ul></ul>
+    <hr />
+
+    <script>
+        function calculate(withSplit = false) {
+            let input = document.getElementById('time').value.trim();
+            let distance = parseFloat(document.getElementById('distance').value);
+            let unit = document.getElementById('unit').value;
+
+            if (isNaN(distance) || distance <= 0) {
+                alert("Please enter a valid distance.");
+                return;
+            }
+
+            let conversion, totalSeconds;
+
+            if (input.includes(':')) {
+                ({ conversion, totalSeconds } = calculateTimePerDistance(input, distance, unit));
+            } else {
+                ({ conversion, totalSeconds } = calculateMPH(input, distance, unit));
+            }
+
+            if (conversion) {
+                addToList(conversion, withSplit ? totalSeconds : null, unit, distance);
+            }
+        }
+
+        function calculateTimePerDistance(input, distance, unit) {
+            let [minutes, seconds] = input.split(':').map(parseFloat);
+            if (isNaN(minutes) || isNaN(seconds)) {
+                alert("Invalid M:SS.MS input.");
+                return {};
+            }
+
+            let totalSeconds = (minutes * 60) + seconds;
+            let milesPerHour = (3600 / totalSeconds) * convertToMiles(distance, unit);
+            let formatted = formatMPH(milesPerHour);
+
+            return { conversion: `${input} for ${distance} ${unit}(s) = ${formatted}`, totalSeconds };
+        }
+
+        function calculateMPH(input, distance, unit) {
+            let mph = parseFloat(input);
+            if (isNaN(mph) || mph <= 0) {
+                alert("Invalid MPH input.");
+                return {};
+            }
+
+            let totalSeconds = (3600 / mph) * convertToMiles(distance, unit);
+            let formatted = formatSeconds(totalSeconds);
+
+            return { conversion: `${input} MPH for ${distance} ${unit}(s) = ${formatted}`, totalSeconds };
+        }
+
+        function convertToMiles(distance, unit) {
+            switch (unit) {
+                case 'meter':
+                    return distance / 1609.34;
+                case 'kilometer':
+                    return distance / 1.60934;
+                default:
+                    return distance; // Mile
+            }
+        }
+
+        function formatSeconds(time) {
+            if (isNaN(time) || time <= 0) {
+                return "Invalid time";
+            }
+
+            let minutes = Math.floor(time / 60);
+            let seconds = time % 60;
+
+            return `${minutes}:${seconds < 10 ? '0' : ''}${seconds.toFixed(2)}`;
+        }
+
+        function formatMPH(mph) {
+            if (isNaN(mph) || mph <= 0) {
+                return "Invalid MPH";
+            }
+
+            return `${mph.toFixed(2)} MPH`;
+        }
+
+        function addToList(content, secondsPerDistance = null, unit, inputDistance) {
+            let ul = document.querySelector('ul');
+            let li = document.createElement('li');
+            li.style.listStyleType = 'none';
+
+            let deleteButton = document.createElement('button');
+            deleteButton.textContent = 'x';
+            deleteButton.style.marginRight = '10px';
+            deleteButton.onclick = function () {
+                ul.removeChild(li);
+            };
+
+            li.appendChild(deleteButton);
+            li.appendChild(document.createTextNode(content));
+
+            if (secondsPerDistance !== null) {
+                let splitsUl = document.createElement('ul');
+                splitsUl.classList.add('splitsUl');
+                splitsUl.style.listStyleType = 'none';
+
+                let totalMeters = convertToMeters(inputDistance, unit);
+                let splitDistance = 200;
+                let totalSplits = Math.floor(1600 / splitDistance);
+                let secondsPerMeter = secondsPerDistance / totalMeters;
+
+                for (let i = 1; i <= totalSplits; i++) {
+                    let splitTime = secondsPerMeter * (splitDistance * i);
+                    let formattedTime = formatSeconds(splitTime);
+
+                    let splitLi = document.createElement('li');
+                    splitLi.textContent = `${splitDistance * i}m: ${formattedTime}`;
+                    splitsUl.appendChild(splitLi);
+                }
+
+                li.appendChild(splitsUl);
+            }
+
+            ul.appendChild(li);
+        }
+
+        function convertToMeters(distance, unit) {
+            switch (unit) {
+                case 'mile':
+                    return distance * 1609.34;
+                case 'kilometer':
+                    return distance * 1000;
+                default:
+                    return distance;
+            }
+        }
+    </script>
+</body>
+
+</html>
